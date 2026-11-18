@@ -2,6 +2,6 @@ apiVersion: v2
 name: acr-pull-secret-controller
 description: Keeps short-lived Azure Container Registry pull secrets in selected namespaces using workload identity federation.
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.1.2
+appVersion: "0.1.2"
 kubeVersion: ">=1.30.0-0"

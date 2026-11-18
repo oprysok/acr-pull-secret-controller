@@ -120,11 +120,11 @@ spec:
 | `acr_pull_secret_token_expiry_timestamp_seconds{registry}` | Alert when `… - time() < 3600`: renewal is overdue |
 | `acr_pull_secret_sync_total{result}` | `updated` / `unchanged` / `removed` / `token_error` / `error` |
 
-Each managed secret carries `acr-pull-secret-controller/refreshed-at` and `…/expires-at` annotations, and failures are recorded as events on the namespace:
+Each managed secret carries `acr-pull-secret-controller/refreshed-at` and `…/expires-at` annotations, and failures are recorded as events on the namespace. Namespaces are cluster-scoped, so Kubernetes stores those events in `default`:
 
 ```bash
 kubectl get secret acr-pull -n my-app -o jsonpath='{.metadata.annotations}'
-kubectl get events -n my-app --field-selector involvedObject.kind=Namespace
+kubectl get events -n default --field-selector involvedObject.kind=Namespace,involvedObject.name=my-app
 ```
 
 **Existing secrets.** The controller never overwrites a secret it didn't create (one without the label `app.kubernetes.io/managed-by=acr-pull-secret-controller`). Delete the old secret to hand it over.
@@ -179,7 +179,7 @@ charts/acr-pull-secret-controller/
 | `release` | `v*` tag | Tests, pushes `ghcr.io/oprysok/acr-pull-secret-controller:<version>` (amd64 + arm64) with SBOM and SLSA provenance, creates a GitHub release with the packaged chart |
 | `image-scan` | Weekly | Trivy scan of the latest published image, results in the Security tab |
 
-To release, merge to `main`, then tag:
+To release, bump `version` and `appVersion` in `charts/acr-pull-secret-controller/Chart.yaml` in a PR, merge it, then tag the merge commit with the same version (the release fails if they differ):
 
 ```bash
 git tag -a v0.2.0 -m v0.2.0 && git push origin v0.2.0
