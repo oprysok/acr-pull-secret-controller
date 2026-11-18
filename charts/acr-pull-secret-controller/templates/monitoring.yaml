@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "apsc.fullname" . }}-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "apsc.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "apsc.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: metrics
+      port: 8080
+      targetPort: metrics
+{{- if gt (int .Values.replicas) 1 }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "apsc.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "apsc.labels" . | nindent 4 }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "apsc.selectorLabels" . | nindent 6 }}
+{{- end }}
+{{- if .Values.metrics.serviceMonitor.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "apsc.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "apsc.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "apsc.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: metrics
+      interval: {{ .Values.metrics.serviceMonitor.interval }}
+{{- end }}

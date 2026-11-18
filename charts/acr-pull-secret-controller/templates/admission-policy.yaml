@@ -1,0 +1,37 @@
+{{- if .Values.restrictSecretWrites.enabled }}
+# The controller needs cluster-wide secret write access. This policy narrows it
+# to the one secret name it manages, so a compromised controller can't touch
+# any other secret.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: {{ include "apsc.fullname" . }}-secret-scope
+  labels:
+    {{- include "apsc.labels" . | nindent 4 }}
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE", "DELETE"]
+        resources: ["secrets"]
+  matchConditions:
+    - name: is-controller
+      expression: >-
+        request.userInfo.username == 'system:serviceaccount:{{ .Release.Namespace }}:{{ include "apsc.serviceAccountName" . }}'
+  validations:
+    - expression: >-
+        (request.operation == 'DELETE' ? oldObject.metadata.name : object.metadata.name) == '{{ .Values.secretName }}'
+      message: "acr-pull-secret-controller may only manage secrets named {{ .Values.secretName }}"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: {{ include "apsc.fullname" . }}-secret-scope
+  labels:
+    {{- include "apsc.labels" . | nindent 4 }}
+spec:
+  policyName: {{ include "apsc.fullname" . }}-secret-scope
+  validationActions: ["Deny"]
+{{- end }}

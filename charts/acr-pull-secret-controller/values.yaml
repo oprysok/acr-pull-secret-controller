@@ -1,0 +1,72 @@
+# Registries to issue pull credentials for (ACR login servers). Required.
+registries: []
+#  - myregistry.azurecr.io
+
+# Registries must end with one of these suffixes; tokens are never sent elsewhere.
+allowedRegistrySuffixes:
+  - azurecr.io
+
+# Workload identity used to obtain tokens. Required.
+azure:
+  # Client ID of the multi-tenant app registration that holds AcrPull in the registry's tenant.
+  clientId: ""
+  # Tenant that owns the registries (not necessarily the cluster's tenant).
+  tenantId: ""
+
+# Name of the pull secret written into each selected namespace.
+secretName: acr-pull
+
+# Namespaces matching this label selector receive the pull secret.
+namespaceSelector: acr-pull-secret-controller/enabled=true
+
+# Renew tokens after this share of their lifetime (ACR refresh tokens live ~3h).
+refreshFraction: 0.5
+
+# Deny the controller's service account any secret write other than `secretName`.
+restrictSecretWrites:
+  enabled: true
+
+image:
+  repository: ghcr.io/oprysok/acr-pull-secret-controller
+  # Defaults to the chart appVersion.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+replicas: 2
+
+serviceAccount:
+  # Defaults to the release full name.
+  name: ""
+  annotations: {}
+
+metrics:
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+
+logLevel: info
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 128Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+priorityClassName: ""
+nodeSelector: {}
+tolerations: []
+affinity: {}
