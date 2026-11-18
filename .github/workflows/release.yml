@@ -17,6 +17,15 @@ jobs:
       - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: go.mod
+      - name: Tag matches chart version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          chart=$(grep -E '^version:' charts/acr-pull-secret-controller/Chart.yaml | awk '{print $2}')
+          app=$(grep -E '^appVersion:' charts/acr-pull-secret-controller/Chart.yaml | awk '{print $2}' | tr -d '"')
+          if [ "$tag" != "$chart" ] || [ "$tag" != "$app" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match Chart.yaml (version $chart, appVersion $app)"
+            exit 1
+          fi
       - run: go vet ./...
       - run: go test -race ./...
 
