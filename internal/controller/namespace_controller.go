@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -46,7 +46,7 @@ type NamespaceReconciler struct {
 	Credentials CredentialSource
 	Selector    labels.Selector
 	SecretName  string
-	Recorder    record.EventRecorder
+	Recorder    events.EventRecorder
 }
 
 func (r *NamespaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -156,7 +156,7 @@ func (r *NamespaceReconciler) removeSecret(ctx context.Context, namespace string
 
 func (r *NamespaceReconciler) event(obj *corev1.Namespace, eventType, reason, msg string) {
 	if r.Recorder != nil {
-		r.Recorder.Event(obj, eventType, reason, msg)
+		r.Recorder.Eventf(obj, nil, eventType, reason, "Reconcile", "%s", msg)
 	}
 }
 
@@ -196,7 +196,7 @@ func requeueAfter(d time.Duration) time.Duration {
 	if d < minRequeue {
 		d = minRequeue
 	}
-	return d + rand.N(maxJitter)
+	return d + rand.N(maxJitter) //nolint:gosec // jitter only, not security-sensitive
 }
 
 func unmanagedError(namespace, name string) error {

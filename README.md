@@ -170,4 +170,23 @@ internal/controller/    namespace reconciler, dockerconfigjson rendering
 charts/acr-pull-secret-controller/
 ```
 
-CI runs tests and builds a multi-arch image on every push. Pushing a `v*` tag publishes `ghcr.io/oprysok/acr-pull-secret-controller`. Dependabot keeps Go modules, the base image and actions current.
+### CI and releases
+
+| Workflow | When | What |
+|---|---|---|
+| `ci` | Every PR and push to `main` | golangci-lint, `go test -race`, `helm lint`, multi-arch image build, Trivy scan (fails on fixable HIGH/CRITICAL) |
+| `codeql` | PRs, `main`, weekly | CodeQL static analysis |
+| `release` | `v*` tag | Tests, pushes `ghcr.io/oprysok/acr-pull-secret-controller:<version>` (amd64 + arm64) with SBOM and SLSA provenance, creates a GitHub release with the packaged chart |
+| `image-scan` | Weekly | Trivy scan of the latest published image, results in the Security tab |
+
+To release, merge to `main`, then tag:
+
+```bash
+git tag -a v0.2.0 -m v0.2.0 && git push origin v0.2.0
+```
+
+`main` only accepts changes through pull requests with passing checks, and only maintainers can create `v*` tags. Actions are pinned to commit SHAs, and Dependabot keeps Go modules, the base image and actions current.
+
+## License
+
+[MIT](LICENSE)

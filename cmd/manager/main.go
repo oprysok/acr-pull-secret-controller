@@ -113,7 +113,7 @@ func run(cfg config) error {
 		Credentials: provider,
 		Selector:    selector,
 		SecretName:  cfg.secretName,
-		Recorder:    mgr.GetEventRecorderFor("acr-pull-secret-controller"),
+		Recorder:    mgr.GetEventRecorder("acr-pull-secret-controller"),
 	}
 	if err := r.SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("set up controller: %w", err)
